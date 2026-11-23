@@ -27,13 +27,18 @@ jobs:
       pull-requests: read
 
   install-dependencies:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '22.x'
       with-front-dependencies-installation: true
 
   test-front:
-    needs: install-dependencies
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -60,7 +65,10 @@ jobs:
   lint-front:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: install-dependencies
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     permissions:
       contents: read
     steps:
@@ -94,8 +102,10 @@ jobs:
   bundle-size-check:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: install-dependencies
-    if: github.event_name == 'pull_request'
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && needs.changes.outputs.code != 'false' }}
     permissions:
       contents: read
       pull-requests: write
@@ -146,7 +156,10 @@ jobs:
   uikit-theme-checker:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: install-dependencies
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     permissions:
       contents: read
     steps:

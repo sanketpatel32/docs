@@ -36,8 +36,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
   build-and-push-backend:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
+    needs: changes
+    if: ${{ !cancelled() && (github.event.action != 'labeled' || github.event.label.name == 'trivy') }}
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -49,10 +56,12 @@ jobs:
       target: backend-production
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
       trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
+      skip: ${{ needs.changes.outputs.code == 'false' }}
       docker_user: 1001:127
 
   build-and-push-frontend:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
+    needs: changes
+    if: ${{ !cancelled() && (github.event.action != 'labeled' || github.event.label.name == 'trivy') }}
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -65,10 +74,12 @@ jobs:
       arm64_reuse_amd64_build_arg: "FRONTEND_IMAGE"
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
       trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
+      skip: ${{ needs.changes.outputs.code == 'false' }}
       docker_user: 1001:127
 
   build-and-push-y-provider:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
+    needs: changes
+    if: ${{ !cancelled() && (github.event.action != 'labeled' || github.event.label.name == 'trivy') }}
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -80,10 +91,12 @@ jobs:
       target: y-provider
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
       trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
+      skip: ${{ needs.changes.outputs.code == 'false' }}
       docker_user: 1001:127
 
   build-and-push-yhub:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
+    needs: changes
+    if: ${{ !cancelled() && (github.event.action != 'labeled' || github.event.label.name == 'trivy') }}
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -95,6 +108,7 @@ jobs:
       target: yhub
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
       trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
+      skip: ${{ needs.changes.outputs.code == 'false' }}
       docker_user: 1000:1000
 
   notify-argocd:

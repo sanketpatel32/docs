@@ -3,9 +3,17 @@ run-name: Helmfile lint
 
 on:
   push:
+    # Not a required check, so a plain filter is enough: nothing waits for it.
+    paths-ignore:
+      - '**/*.md'
+      - 'documentation/**'
   pull_request:
     branches:
       - 'main'
+    # Not a required check, so a plain filter is enough: nothing waits for it.
+    paths-ignore:
+      - '**/*.md'
+      - 'documentation/**'
 
 permissions:
   contents: read

@@ -11,6 +11,9 @@ on:
       e2e:
         description: "'false' when the change does not concern the e2e tests"
         value: ${{ jobs.detect.outputs.e2e }}
+      code:
+        description: "'false' when the change only touches markdown files and the documentation"
+        value: ${{ jobs.detect.outputs.code }}
 
 permissions:
   contents: read
@@ -25,6 +28,7 @@ jobs:
     outputs:
       # Anything but two positive 'false' (a failed detection) runs the tests.
       e2e: ${{ (steps.filter-e2e.outputs.e2e == 'false' && steps.filter-e2e.outputs.e2e-assets == 'false') && 'false' || 'true' }}
+      code: ${{ steps.filter-code.outputs.code }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -55,3 +59,16 @@ jobs:
               - '!src/loadtest/**'
             e2e-assets:
               - 'src/frontend/apps/e2e/**/*.md'
+      # On pull requests only: pushes to main and tags run everything.
+      - name: Detect the changes beyond the markdown files and the documentation
+        id: filter-code
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!documentation/**'
